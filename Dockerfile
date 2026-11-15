@@ -52,6 +52,8 @@ COPY --from=builder /src/adminer.php /var/www/html/adminer.php
 
 COPY --from=builder /src/plugins/login-sqlite-passwordless.php /var/www/html/adminer-plugins/
 
+COPY --from=builder /src/plugins/login-redis-passwordless.php /var/www/html/adminer-plugins/
+
 COPY --from=builder /src/drivers/redis.php /var/www/html/adminer-plugins/
 
 EXPOSE 8080
