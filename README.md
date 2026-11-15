@@ -5,6 +5,7 @@
 > - **Custom Docker image** — `Dockerfile` on a slim Debian base with PHP CLI and only MariaDB, PostgreSQL, SQLite and Redis. Compiled via `compile.php`, served on port 8080.
 > - **Redis driver** — bundled by `php compile.php drivers`.
 > - **Multi-arch Docker publish** — GitHub Actions builds `linux/amd64` + `linux/arm64` on release, pushes to `ghcr.io/agungdh/adminer`. Branch pushes only build and smoke test.
+> - **Release ZIP** — GitHub Actions also publishes `adminer-<version>.zip` on release with the compiled `adminer.php`, the passwordless login plugins and the Redis driver, laid out like the Docker image.
 >
 > Everything below is the original upstream README.
 

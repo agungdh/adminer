@@ -1,0 +1,53 @@
+name: ZIP package
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  contents: write # attach the archive to the release
+
+jobs:
+  package:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive # compile.php inlines the jush, JsShrink and PhpShrink submodules
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Compile
+        run: |
+          version=$(php -r 'include "adminer/include/version.inc.php"; echo Adminer\VERSION;')
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          php compile.php
+          if [ -f "adminer-$version.php" ]; then
+            mv "adminer-$version.php" adminer.php
+          fi
+          php compile.php drivers
+
+      - name: Assemble package
+        run: |
+          mkdir -p package/adminer-plugins
+          cp adminer.php package/
+          cp plugins/login-sqlite-passwordless.php plugins/login-redis-passwordless.php package/adminer-plugins/
+          cp drivers/redis.php package/adminer-plugins/
+          cd package
+          zip -r "../adminer-$VERSION.zip" .
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: adminer-${{ env.VERSION }}
+          path: adminer-*.zip
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" adminer-*.zip --clobber
