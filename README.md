@@ -1,6 +1,7 @@
 > **Modified version.** This is a personal fork of [Adminer](https://www.adminer.org/), kept in sync with the latest upstream release. Release tags carry an `-agungdh.N` suffix so they never collide with upstream's. Changes against upstream:
 >
 > - **Passwordless SQLite login** — `plugins/login-sqlite-passwordless.php` lets you log in to SQLite without credentials; other drivers are unaffected.
+> - **Passwordless Redis login** — `plugins/login-redis-passwordless.php` does the same for Redis, so a server without `requirepass` needs no password; a server requiring one still reports its own error.
 > - **Custom Docker image** — `Dockerfile` on a slim Debian base with PHP CLI and only MariaDB, PostgreSQL, SQLite and Redis. Compiled via `compile.php`, served on port 8080.
 > - **Redis driver** — bundled by `php compile.php drivers`.
 > - **Multi-arch Docker publish** — GitHub Actions builds `linux/amd64` + `linux/arm64` on release, pushes to `ghcr.io/agungdh/adminer`. Branch pushes only build and smoke test.
