@@ -1,0 +1,10 @@
+.git
+.github
+.commandcode
+node_modules
+vendor
+tests/results
+tests/screenshots
+adminer*.php
+editor*.php
+drivers
