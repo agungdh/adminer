@@ -2,10 +2,10 @@
 >
 > - **Passwordless SQLite login** — `plugins/login-sqlite-passwordless.php` lets you log in to SQLite without credentials; other drivers are unaffected.
 > - **Passwordless Redis login** — `plugins/login-redis-passwordless.php` does the same for Redis, so a server without `requirepass` needs no password; a server requiring one still reports its own error.
-> - **Custom Docker image** — `Dockerfile` on a slim Debian base with PHP CLI and only MariaDB, PostgreSQL, SQLite and Redis. Compiled via `compile.php`, served on port 8080.
-> - **Redis driver** — bundled by `php compile.php drivers`.
+> - **Custom Docker image** — `Dockerfile` on a Debian 13 slim runtime with PHP 8.4 CLI, the MySQL, PostgreSQL and SQLite extensions, and the MariaDB and PostgreSQL clients. Compiled via `compile.php`, served on port 8080.
+> - **Bundled Redis driver** — `php compile.php drivers` builds `plugins/drivers/redis.php` into `drivers/`, and the Docker image ships it in `adminer-plugins/`.
 > - **Multi-arch Docker publish** — GitHub Actions builds `linux/amd64` + `linux/arm64` on release, pushes to `ghcr.io/agungdh/adminer`. Branch pushes only build and smoke test.
-> - **Release ZIP** — GitHub Actions also publishes `adminer-<version>.zip` on release with the compiled `adminer.php`, the passwordless login plugins and the Redis driver, laid out like the Docker image.
+> - **Release ZIP** — GitHub Actions also attaches `adminer-<version>.zip` to the release with the compiled `adminer.php`, both passwordless login plugins and the Redis driver, laid out like the Docker image: `adminer-plugins/` next to `adminer.php`.
 >
 > Everything below is the original upstream README.
 
