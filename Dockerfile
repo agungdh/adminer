@@ -1,4 +1,4 @@
-FROM debian:13-slim AS builder
+FROM debian:13 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
