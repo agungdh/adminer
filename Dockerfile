@@ -19,6 +19,8 @@ RUN test -f adminer/static/jush/modules/jush-sql.js \
 
 RUN php compile.php && mv adminer-*.php adminer.php
 
+RUN php compile.php drivers
+
 
 FROM debian:13-slim
 
@@ -49,6 +51,8 @@ WORKDIR /var/www/html
 COPY --from=builder /src/adminer.php /var/www/html/adminer.php
 
 COPY --from=builder /src/plugins/login-sqlite-passwordless.php /var/www/html/adminer-plugins/
+
+COPY --from=builder /src/drivers/redis.php /var/www/html/adminer-plugins/
 
 EXPOSE 8080
 
