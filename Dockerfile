@@ -1,3 +1,25 @@
+FROM debian:13-slim AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN set -x \
+&& apt-get update \
+&& apt-get install -y --no-install-recommends \
+	php8.4-cli \
+&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+COPY . /src/
+
+RUN test -f adminer/static/jush/modules/jush-sql.js \
+&& test -f conf/JsShrink/jsShrink.php \
+&& test -f conf/PhpShrink/phpShrink.php \
+|| (echo "Submodules are missing, run: git submodule update --init --recursive" >&2 && exit 1)
+
+RUN php compile.php && mv adminer-*.php adminer.php
+
+
 FROM debian:13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -5,7 +27,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -x \
 && apt-get update \
 && apt-get install -y --no-install-recommends \
-	ca-certificates \
 	php8.4-cli \
 	php8.4-mysql \
 	php8.4-pgsql \
@@ -25,8 +46,8 @@ STOPSIGNAL SIGINT
 
 WORKDIR /var/www/html
 
-COPY . /var/www/html/
+COPY --from=builder /src/adminer.php /var/www/html/adminer.php
 
 EXPOSE 8080
 
-CMD [ "php", "-S", "0.0.0.0:8080", "-t", "/var/www/html" ]
+CMD [ "php", "-S", "0.0.0.0:8080", "/var/www/html/adminer.php" ]
