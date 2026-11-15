@@ -6,6 +6,7 @@
 > - **Bundled Redis driver** — `php compile.php drivers` builds `plugins/drivers/redis.php` into `drivers/`, and the Docker image ships it in `adminer-plugins/`.
 > - **Multi-arch Docker publish** — GitHub Actions builds `linux/amd64` + `linux/arm64` on release, pushes to `ghcr.io/agungdh/adminer`. Branch pushes only build and smoke test.
 > - **Release ZIP** — GitHub Actions also attaches `adminer-<version>.zip` to the release with the compiled `adminer.php`, both passwordless login plugins and the Redis driver, laid out like the Docker image: `adminer-plugins/` next to `adminer.php`.
+> - **Local stack** — `docker-compose.yml` runs this checkout against PostgreSQL 18, MariaDB 12 and Valkey 9.
 >
 > Everything below is the original upstream README.
 
