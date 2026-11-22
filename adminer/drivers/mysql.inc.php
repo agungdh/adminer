@@ -1158,6 +1158,14 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 		if (!$return) {
 			return array();
 		}
+		// ROUTINE_DEFINITION has the string literals unescaped ('\\' becomes '\'), SHOW CREATE has the original body starting on a new line
+		if ($return['language'] != 'javascript' && preg_match('~^[^\'"]+(?=[\'"])~', $return['definition'], $match)) {
+			$create = get_val("SHOW CREATE $type " . idf_escape($name), 2);
+			$pos = strpos($create, "\n$match[0]");
+			if ($pos) {
+				$return['definition'] = substr($create, $pos + 1);
+			}
+		}
 		$return['options'] = array(
 			"DEFINER" => $return['definer'], // empty for the logged user so that the routine can be created by anyone
 			"DETERMINISTIC" => $return['is_deterministic'],
@@ -1237,6 +1245,9 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 	/** Get SQL command to create table */
 	function create_sql(string $table, ?bool $auto_increment, string $style): string {
 		$return = get_val("SHOW CREATE TABLE " . table($table), 1);
+		$return = preg_replace_callback('~(?<=^CREATE TABLE )`(?:[^`]|``)+`~', function () use ($table): string {
+			return table($table); // lower_case_table_names=1 lowercases the name here, the other statements in the export use $table
+		}, $return);
 		if (!$auto_increment) {
 			$return = preg_replace('~(\n\)[^\n]*?) AUTO_INCREMENT=\d+~', '\1', $return); // \n) - the table options, not a comment
 		}
@@ -1317,7 +1328,7 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 		}
 		if (preg_match("~geom|point|linestring|polygon~", $field["type"])) {
 			$prefix = (min_version(8) ? "ST_" : "");
-			$return = $prefix . "GeomFromText($return, $prefix" . "SRID($field[field]))";
+			$return = $prefix . "GeomFromText($return, $prefix" . "SRID(" . idf_escape($field["field"]) . "))";
 		}
 		return $return;
 	}
