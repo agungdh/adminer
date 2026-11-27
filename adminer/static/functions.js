@@ -146,16 +146,90 @@ function cookie(assign, days) {
 	;
 }
 
-/** Verify current Adminer version
-* @param {string} current
+/** Compare versions treating the fork suffix as newer than the same base
+* @param {string} version1
+* @param {string} version2
+* @return {number} -1, 0 or 1
 */
-function verifyVersion(current) {
-	cookie('adminer_version=0', 1);
-	ajax('https://www.adminer.org/version/?current=' + current, request => {
-		const json = JSON.parse(request.responseText);
-		cookie('adminer_version=' + (json.version || current), 7); // empty if there's no newer version
-		qs('#version').textContent = json.version;
-	}, '', null); // null - a failed check must not report being offline
+function versionCompare(version1, version2) {
+	const normalize = version => {
+		version = version.replace(/^v/, '');
+		const match = /^(\d+(?:\.\d+)*)-agungdh\.(\d+)$/.exec(version);
+		return (match ? match[1] + '.' + match[2] : version);
+	};
+	const parts1 = normalize(version1).split('.');
+	const parts2 = normalize(version2).split('.');
+	for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+		const part1 = (parts1[i] !== undefined ? parts1[i] : '0');
+		const part2 = (parts2[i] !== undefined ? parts2[i] : '0');
+		if (isNaN(part1) || isNaN(part2)) {
+			return (version1 < version2 ? -1 : (version1 > version2 ? 1 : 0));
+		}
+		if (+part1 != +part2) {
+			return (+part1 < +part2 ? -1 : 1);
+		}
+	}
+	return 0;
+}
+
+/** Verify current Adminer version against upstream and the fork releases
+* @param {string} current
+* @param {string} repo GitHub repository with the fork releases
+*/
+function verifyVersion(current, repo) {
+	cookie('adminer_version=0', 1); // dummy value to prevent repeated verifications after a failure
+	const base = current.replace(/-.*/, '');
+	const candidates = [];
+	let pending = 2;
+	let succeeded = 0;
+	const done = () => {
+		if (--pending) {
+			return;
+		}
+		if (!succeeded) {
+			return; // keep the dummy cookie, retry tomorrow
+		}
+		let best = null;
+		for (const candidate of candidates) {
+			if (!candidate || versionCompare(candidate.version, current) <= 0) {
+				continue;
+			}
+			if (!best || versionCompare(candidate.version, best.version) > 0) {
+				best = candidate;
+			}
+		}
+		// check again tomorrow if one of the sources failed
+		cookie('adminer_version=' + (best ? best.version : current), (succeeded == 2 ? 7 : 1));
+		const link = qs('#version');
+		if (link) {
+			link.textContent = (best ? best.version : '');
+			if (best) {
+				link.href = best.url;
+			}
+		}
+	};
+	// upstream returns the newer version or an empty string
+	fetchJSON('https://www.adminer.org/version/?current=' + encodeURIComponent(base), json => {
+		if (json) {
+			succeeded++;
+			if (json.version) {
+				candidates.push({version: json.version, url: 'https://www.adminer.org/#download'});
+			}
+		}
+		done();
+	});
+	// the fork publishes releases on GitHub
+	fetchJSON('https://api.github.com/repos/' + repo + '/releases?per_page=10', json => {
+		if (json) {
+			succeeded++;
+			for (const release of json) {
+				if (!release.draft && !release.prerelease) {
+					candidates.push({version: release.tag_name, url: release.html_url});
+				}
+			}
+		}
+		done();
+	});
 }
 
 /** Get value of select
@@ -827,6 +901,22 @@ function ajax(url, callback, data, message) {
 	};
 	request.send(data);
 	return request;
+}
+
+/** Fetch JSON, call the callback with null on error
+* @param {string} url
+* @param {function(?Object|?Array)} callback
+*/
+function fetchJSON(url, callback) {
+	if (!window.fetch) {
+		callback(null);
+		return;
+	}
+	fetch(url)
+		.then(response => response.ok ? response.json() : null)
+		.catch(() => null)
+		.then(callback)
+	;
 }
 
 /** Use setHtml(key, value) for JSON response

@@ -63,7 +63,8 @@
             "@php -d pcre.jit=0 tests/unit/json_exact.php",
             "@php tests/unit/parse_server.php",
             "@php tests/unit/shorten.php",
-            "@php tests/unit/url.php"
+            "@php tests/unit/url.php",
+            "@php tests/unit/version.php"
         ],
         "compat": [
             "@php compile.php",

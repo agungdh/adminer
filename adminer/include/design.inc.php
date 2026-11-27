@@ -76,7 +76,7 @@ function page_header(string $title, string $error = "", $breadcrumb = array(), s
 	adminer()->bodyClass();
 	echo "'>\n";
 	// the event handlers and the <html> classes are registered by functions.js
-	echo script((isset($_COOKIE["adminer_version"]) || !adminer()->verifyVersion() ? "" : "onload = partial(verifyVersion, '" . VERSION . "');\n") . "
+	echo script((isset($_COOKIE["adminer_version"]) || !adminer()->verifyVersion() ? "" : "onload = partial(verifyVersion, '" . VERSION . "', '" . VERSION_REPO . "');\n") . "
 const offlineMessage = '" . js_escape(lang('You are offline.')) . "';
 const numberFormat = '" . js_escape(lang('#,##0')) . "';
 const numberDigits = '" . js_escape(lang('0123456789')) . "';
@@ -201,7 +201,7 @@ function csp(): array {
 		array(
 			// 'self' is a fallback for browsers not supporting 'strict-dynamic', 'unsafe-inline' is a fallback for browsers not supporting 'nonce-'
 			"script-src" => "'self' 'unsafe-inline' 'nonce-" . get_nonce() . "' 'strict-dynamic'",
-			"connect-src" => "'self' https://www.adminer.org",
+			"connect-src" => "'self' https://www.adminer.org https://api.github.com",
 			"frame-src" => "https://www.adminer.org", // version check without JS
 			"object-src" => "'none'",
 			"base-uri" => "'none'",
@@ -242,13 +242,35 @@ function official_design_checksums(): array {
 	return $return;
 }
 
+/** Get VERSION without the fork suffix */
+function version_base(): string {
+	return (string) preg_replace('~-.*~', '', VERSION);
+}
+
+/** Get HTML of the link to a newer version
+* @param string $download URL of the upstream download page
+* @return string anchor with the newer version, empty string if there is none
+*/
+function version_link(string $download = "https://www.adminer.org/#download"): string {
+	$new_version = (string) $_COOKIE["adminer_version"];
+	$url = (preg_match('~^v?\d+(?:\.\d+)*-(?:agungdh)\.\d+$~', $new_version)
+		? "https://github.com/" . VERSION_REPO . "/releases/tag/" . rawurlencode($new_version)
+		: $download
+	);
+	$show = (adminer()->verifyVersion() && version_compare_fork(VERSION, $new_version) < 0);
+	return " <a href='" . h($url) . "'" . target_blank() . " id='version'>"
+		. ($show ? h($new_version) : "")
+		. version_iframe()
+		. "</a>";
+}
+
 /** Get HTML displaying a new version even without JavaScript
 * @return string noscript iframe or empty string
 */
 function version_iframe(): string {
 	return (isset($_COOKIE["adminer_version"]) || !adminer()->verifyVersion()
 		? ""
-		: "<noscript><iframe sandbox src='https://www.adminer.org/version/?current=" . VERSION . "&amp;noscript=1'></iframe></noscript>"
+		: "<noscript><iframe sandbox src='https://www.adminer.org/version/?current=" . version_base() . "&amp;noscript=1'></iframe></noscript>"
 	);
 }
 

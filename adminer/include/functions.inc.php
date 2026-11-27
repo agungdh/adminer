@@ -182,6 +182,15 @@ function min_version($version, $maria_db = "", ?Db $connection2 = null): bool {
 	return $version && version_compare($server_info, $version) >= 0;
 }
 
+/** Compare versions treating the fork suffix as newer than the same base */
+function version_compare_fork(string $version1, string $version2): int {
+	$normalize = function (string $version): string {
+		$version = (string) preg_replace('~^v~', '', $version);
+		return (string) preg_replace('~^(\d+(?:\.\d+)*)-agungdh\.(\d+)$~', '$1.$2', $version);
+	};
+	return version_compare($normalize($version1), $normalize($version2));
+}
+
 /** Get connection charset */
 function charset(Db $connection): string {
 	return (min_version("5.5.3", 0, $connection) ? "utf8mb4" : "utf8"); // SHOW CHARSET would require an extra query

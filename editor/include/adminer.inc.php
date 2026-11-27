@@ -694,11 +694,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row
 	}
 
 	function navigation(string $missing): void {
-		echo "<h1>" . adminer()->name() . " <span class='version'>" . VERSION;
-		$new_version = $_COOKIE["adminer_version"];
-		echo " <a href='https://www.adminer.org/editor/#download'" . target_blank() . " id='version'>"
-			. (version_compare(VERSION, $new_version) < 0 ? h($new_version) : "") . version_iframe() . "</a>";
-		echo "</span></h1>\n";
+		echo "<h1>" . adminer()->name() . " <span class='version'>" . VERSION . version_link("https://www.adminer.org/editor/#download") . "</span></h1>\n";
 		switch_lang();
 		if ($missing == "auth") {
 			$first = true;
